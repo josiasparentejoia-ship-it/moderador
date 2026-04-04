@@ -6,8 +6,10 @@ import asyncio
 import threading
 import os
 import uvicorn
+from dotenv import load_dotenv
 
-# Lê direto do ambiente (Railway injeta as vars no container)
+load_dotenv()
+
 BOT_TOKEN  = os.environ.get("BOT_TOKEN")
 WEBAPP_URL = os.environ.get("WEBAPP_URL")
 PORT       = int(os.environ.get("PORT", 8000))
