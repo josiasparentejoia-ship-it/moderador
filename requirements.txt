@@ -2,4 +2,5 @@ fastapi
 uvicorn
 httpx
 aiogram
+psycopg2-binary
 python-dotenv
