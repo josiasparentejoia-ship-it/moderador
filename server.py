@@ -8,6 +8,7 @@ from urllib.parse import unquote, parse_qsl
 import httpx
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from database import init_db, ip_already_used, user_accepted, save_user
 
@@ -16,6 +17,13 @@ CHAT_ID    = os.environ.get("CHAT_ID")
 LINK_EXPIRE_SECONDS = int(os.environ.get("LINK_EXPIRE_SECONDS", 300))
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["POST", "GET"],
+    allow_headers=["Content-Type"],
+)
 
 init_db()
 
