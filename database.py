@@ -1,58 +1,47 @@
 import os
-import psycopg2
-import psycopg2.extras
+import sqlite3
 from datetime import datetime
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DB_PATH = os.environ.get("DB_PATH", "moderador.db")
 
 
 def get_conn():
-    return psycopg2.connect(DATABASE_URL)
+    return sqlite3.connect(DB_PATH)
 
 
 def init_db():
     con = get_conn()
-    cur = con.cursor()
-    cur.execute("""
+    con.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            user_id     BIGINT PRIMARY KEY,
+            user_id     INTEGER PRIMARY KEY,
             username    TEXT,
             first_name  TEXT,
             ip          TEXT,
-            accepted    BOOLEAN DEFAULT FALSE,
-            accepted_at TIMESTAMP,
+            accepted    INTEGER DEFAULT 0,
+            accepted_at TEXT,
             invite_link TEXT,
-            banned      BOOLEAN DEFAULT FALSE
+            banned      INTEGER DEFAULT 0
         )
     """)
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_ip ON users(ip)")
+    con.execute("CREATE INDEX IF NOT EXISTS idx_ip ON users(ip)")
     con.commit()
-    cur.close()
     con.close()
 
 
 def ip_already_used(ip: str) -> bool:
     con = get_conn()
-    cur = con.cursor()
-    cur.execute(
-        "SELECT user_id FROM users WHERE ip = %s AND accepted = TRUE AND banned = FALSE",
-        (ip,)
-    )
-    row = cur.fetchone()
-    cur.close()
+    row = con.execute(
+        "SELECT user_id FROM users WHERE ip = ? AND accepted = 1 AND banned = 0", (ip,)
+    ).fetchone()
     con.close()
     return row is not None
 
 
 def user_accepted(user_id: int) -> bool:
     con = get_conn()
-    cur = con.cursor()
-    cur.execute(
-        "SELECT accepted, banned FROM users WHERE user_id = %s",
-        (user_id,)
-    )
-    row = cur.fetchone()
-    cur.close()
+    row = con.execute(
+        "SELECT accepted, banned FROM users WHERE user_id = ?", (user_id,)
+    ).fetchone()
     con.close()
     if not row:
         return False
@@ -62,49 +51,40 @@ def user_accepted(user_id: int) -> bool:
 
 def save_user(user_id: int, username: str, first_name: str, ip: str, invite_link: str):
     con = get_conn()
-    cur = con.cursor()
-    cur.execute("""
+    con.execute("""
         INSERT INTO users (user_id, username, first_name, ip, accepted, accepted_at, invite_link, banned)
-        VALUES (%s, %s, %s, %s, TRUE, %s, %s, FALSE)
-        ON CONFLICT (user_id) DO UPDATE SET
-            username    = EXCLUDED.username,
-            first_name  = EXCLUDED.first_name,
-            ip          = EXCLUDED.ip,
-            accepted    = TRUE,
-            accepted_at = EXCLUDED.accepted_at,
-            invite_link = EXCLUDED.invite_link
-    """, (user_id, username, first_name, ip, datetime.utcnow(), invite_link))
+        VALUES (?, ?, ?, ?, 1, ?, ?, 0)
+        ON CONFLICT(user_id) DO UPDATE SET
+            username    = excluded.username,
+            first_name  = excluded.first_name,
+            ip          = excluded.ip,
+            accepted    = 1,
+            accepted_at = excluded.accepted_at,
+            invite_link = excluded.invite_link
+    """, (user_id, username, first_name, ip, datetime.utcnow().isoformat(), invite_link))
     con.commit()
-    cur.close()
     con.close()
 
 
 def ban_user(user_id: int):
     con = get_conn()
-    cur = con.cursor()
-    cur.execute("UPDATE users SET banned = TRUE WHERE user_id = %s", (user_id,))
+    con.execute("UPDATE users SET banned = 1 WHERE user_id = ?", (user_id,))
     con.commit()
-    cur.close()
     con.close()
 
 
 def unban_user(user_id: int):
     con = get_conn()
-    cur = con.cursor()
-    cur.execute("UPDATE users SET banned = FALSE, accepted = FALSE WHERE user_id = %s", (user_id,))
+    con.execute("UPDATE users SET banned = 0, accepted = 0 WHERE user_id = ?", (user_id,))
     con.commit()
-    cur.close()
     con.close()
 
 
 def list_users(limit: int = 10):
     con = get_conn()
-    cur = con.cursor()
-    cur.execute("""
+    rows = con.execute("""
         SELECT user_id, username, first_name, ip, accepted_at, banned
-        FROM users ORDER BY accepted_at DESC NULLS LAST LIMIT %s
-    """, (limit,))
-    rows = cur.fetchall()
-    cur.close()
+        FROM users ORDER BY accepted_at DESC LIMIT ?
+    """, (limit,)).fetchall()
     con.close()
     return rows
