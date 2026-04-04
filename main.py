@@ -6,13 +6,24 @@ import asyncio
 import threading
 import os
 import uvicorn
-from dotenv import load_dotenv
 
-load_dotenv()
+# Lê direto do ambiente (Railway injeta as vars no container)
+BOT_TOKEN  = os.environ.get("BOT_TOKEN")
+WEBAPP_URL = os.environ.get("WEBAPP_URL")
+PORT       = int(os.environ.get("PORT", 8000))
+
+# Diagnóstico de startup
+print(f"[startup] BOT_TOKEN definido: {bool(BOT_TOKEN)}")
+print(f"[startup] WEBAPP_URL: {WEBAPP_URL}")
+print(f"[startup] PORT: {PORT}")
+
+if not BOT_TOKEN:
+    raise RuntimeError("BOT_TOKEN não encontrado nas variáveis de ambiente!")
+
 
 def run_api():
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run("server:app", host="0.0.0.0", port=port, log_level="info")
+    uvicorn.run("server:app", host="0.0.0.0", port=PORT, log_level="info")
+
 
 async def run_bot():
     from aiogram import Bot, Dispatcher
@@ -22,9 +33,6 @@ async def run_bot():
         InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
     )
     from database import init_db, user_accepted
-
-    BOT_TOKEN  = os.getenv("BOT_TOKEN")
-    WEBAPP_URL = os.getenv("WEBAPP_URL")
 
     bot = Bot(token=BOT_TOKEN)
     dp  = Dispatcher()
@@ -57,13 +65,11 @@ async def run_bot():
                 "Aceite os termos primeiro. Use /start para começar."
             )
 
-    print("Bot iniciado...")
+    print("[bot] Polling iniciado...")
     await dp.start_polling(bot)
 
+
 if __name__ == "__main__":
-    # API em thread separada (bloqueante)
     t = threading.Thread(target=run_api, daemon=True)
     t.start()
-
-    # Bot roda no loop principal
     asyncio.run(run_bot())

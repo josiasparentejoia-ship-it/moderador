@@ -8,16 +8,12 @@ from urllib.parse import unquote, parse_qsl
 import httpx
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from dotenv import load_dotenv
 
 from database import init_db, ip_already_used, user_accepted, save_user
 
-load_dotenv()
-
-BOT_TOKEN  = os.getenv("BOT_TOKEN")
-CHAT_ID    = os.getenv("CHAT_ID")        # ID do grupo (número negativo, ex: -1001234567890)
-LINK_EXPIRE_SECONDS = int(os.getenv("LINK_EXPIRE_SECONDS", 300))  # 5 min
+BOT_TOKEN  = os.environ.get("BOT_TOKEN")
+CHAT_ID    = os.environ.get("CHAT_ID")
+LINK_EXPIRE_SECONDS = int(os.environ.get("LINK_EXPIRE_SECONDS", 300))
 
 app = FastAPI()
 
