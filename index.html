@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Acesso ao Grupo</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #efeff4;
+    min-height: 100vh;
+    padding-bottom: 24px;
+  }
+
+  /* ── Avatar / topo ── */
+  .profile-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 20px;
+  }
+
+  .avatar-wrap {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    margin-bottom: 12px;
+  }
+
+  .avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2AABEE, #1a7fbf);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -1px;
+    user-select: none;
+  }
+
+  .status-dot {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    background: #4cd964;
+    border-radius: 50%;
+    border: 2.5px solid #efeff4;
+  }
+
+  .profile-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: #000;
+    text-align: center;
+  }
+
+  .profile-status {
+    font-size: 14px;
+    color: #4cd964;
+    margin-top: 3px;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: #fff;
+    margin: 0 0 10px 0;
+    border-top: 1px solid #c8c7cc;
+    border-bottom: 1px solid #c8c7cc;
+  }
+
+  .card-title {
+    font-size: 13px;
+    color: #6d6d72;
+    padding: 6px 16px 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .row {
+    display: flex;
+    align-items: flex-start;
+    padding: 11px 16px;
+    border-bottom: 1px solid #efeff4;
+    gap: 14px;
+  }
+
+  .row:last-child { border-bottom: none; }
+
+  .row-icon {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+
+  .row-icon svg {
+    width: 22px;
+    height: 22px;
+    fill: #c7c7cc;
+  }
+
+  .row-content { flex: 1; }
+
+  .row-label {
+    font-size: 12px;
+    color: #8e8e93;
+    margin-bottom: 2px;
+  }
+
+  .row-value {
+    font-size: 16px;
+    color: #000;
+    line-height: 1.35;
+  }
+
+  .row-value.blue { color: #2AABEE; }
+  .row-value.red  { color: #ff3b30; font-size: 14px; }
+  .row-value.muted { color: #8e8e93; font-size: 14px; line-height: 1.5; }
+
+  /* badge de membros */
+  .badge {
+    background: #efeff4;
+    color: #8e8e93;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: auto;
+    align-self: center;
+    white-space: nowrap;
+  }
+
+  /* ── Área dos botões ── */
+  .btn-area {
+    padding: 0 0 10px;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    font-size: 17px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: opacity .15s;
+    border-top: 1px solid #c8c7cc;
+    border-bottom: 1px solid #c8c7cc;
+    background: #fff;
+  }
+
+  .btn:active { opacity: 0.6; }
+
+  .btn-agree {
+    color: #2AABEE;
+  }
+
+  .btn-enter {
+    color: #4cd964;
+    display: none;
+  }
+
+  .btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .btn-agree svg { fill: #2AABEE; }
+  .btn-enter svg { fill: #4cd964; }
+
+  /* ── Loading spinner ── */
+  .spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 2.5px solid #c8c7cc;
+    border-top-color: #2AABEE;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(0,0,0,.75);
+    color: #fff;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 20px;
+    opacity: 0;
+    transition: opacity .3s, transform .3s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- Topo: avatar + nome -->
+<div class="profile-top">
+  <div class="avatar-wrap">
+    <div class="avatar">DEV</div>
+    <div class="status-dot"></div>
+  </div>
+  <div class="profile-name">Grupo Dev</div>
+  <div class="profile-status">online</div>
+</div>
+
+<!-- Sobre o grupo -->
+<div class="card">
+  <div class="row">
+    <div class="row-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-8v4h4l-5 8z"/></svg>
+    </div>
+    <div class="row-content">
+      <div class="row-value">Grupo exclusivo para desenvolvedores. Compartilhamento de recursos, testes e ferramentas.</div>
+    </div>
+    <div class="badge">privado</div>
+  </div>
+</div>
+
+<!-- Informações -->
+<div class="card">
+  <div class="card-title">Informações</div>
+
+  <div class="row">
+    <div class="row-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    </div>
+    <div class="row-content">
+      <div class="row-label">Tipo</div>
+      <div class="row-value blue">Grupo Privado</div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="row-icon">
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+    </div>
+    <div class="row-content">
+      <div class="row-label">Acesso</div>
+      <div class="row-value">Somente via bot</div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="row-icon">
+      <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+    </div>
+    <div class="row-content">
+      <div class="row-label">Visibilidade</div>
+      <div class="row-value">Não indexado no Telegram</div>
+    </div>
+  </div>
+</div>
+
+<!-- Aviso legal -->
+<div class="card">
+  <div class="card-title">Aviso importante</div>
+
+  <div class="row">
+    <div class="row-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+    </div>
+    <div class="row-content">
+      <div class="row-value red">Todos os dados compartilhados neste grupo são fictícios</div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="row-icon">
+      <svg viewBox="0 0 24 24"><path d="M14 6l-1-2H5v17h2v-7h5l1 2h7V6h-6zm4 8h-4l-1-2H7V6h5l1 2h5v6z"/></svg>
+    </div>
+    <div class="row-content">
+      <div class="row-value muted">Finalidade exclusivamente educacional e de desenvolvimento. O uso indevido é de inteira responsabilidade do usuário.</div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="row-icon">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+    </div>
+    <div class="row-content">
+      <div class="row-value muted">Ao concordar, você confirma ter lido e aceito os termos acima. Seu aceite fica registrado com data e hora.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Botões -->
+<div class="btn-area">
+  <button class="btn btn-agree" id="btnAgree" onclick="handleAgree()">
+    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+    <span id="btnAgreeText">Concordar e solicitar acesso</span>
+    <div class="spinner" id="spinner"></div>
+  </button>
+
+  <button class="btn btn-enter" id="btnEnter">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-8v4h4l-5 8z"/></svg>
+    Entrar no Grupo
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    tg.ready();
+    tg.expand();
+  }
+
+  function showToast(msg, duration = 2500) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), duration);
+  }
+
+  async function handleAgree() {
+    const btn = document.getElementById('btnAgree');
+    const txt = document.getElementById('btnAgreeText');
+    const spin = document.getElementById('spinner');
+
+    btn.disabled = true;
+    txt.textContent = 'Aguarde...';
+    spin.style.display = 'block';
+
+    try {
+      const initData = tg?.initData || '';
+
+      // Aponte API_URL para o seu backend (Railway, Render, VPS, etc.)
+      const API_URL = 'https://SEU-BACKEND.railway.app';
+
+      const res = await fetch(API_URL + '/api/agree', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData })
+      });
+
+      const data = await res.json();
+
+      if (data.invite_link) {
+        // Mostra botão de entrada com o link
+        const btnEnter = document.getElementById('btnEnter');
+        btnEnter.style.display = 'flex';
+        btnEnter.onclick = () => {
+          if (tg) {
+            tg.openTelegramLink(data.invite_link);
+          } else {
+            window.open(data.invite_link, '_blank');
+          }
+        };
+
+        btn.style.display = 'none';
+        showToast('✅ Termos aceitos! Clique para entrar.');
+      } else {
+        throw new Error(data.error || 'Erro ao gerar acesso');
+      }
+    } catch (err) {
+      showToast('❌ ' + err.message);
+      btn.disabled = false;
+      txt.textContent = 'Concordar e solicitar acesso';
+      spin.style.display = 'none';
+    }
+  }
+</script>
+</body>
+</html>

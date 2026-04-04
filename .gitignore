@@ -1,0 +1,6 @@
+.env
+moderador.db
+__pycache__/
+*.pyc
+*.pyo
+.venv/
