@@ -1,7 +1,8 @@
+import os
 import sqlite3
 from datetime import datetime
 
-DB_PATH = "moderador.db"
+DB_PATH = os.environ.get("DB_PATH", "moderador.db")
 
 def init_db():
     con = sqlite3.connect(DB_PATH)

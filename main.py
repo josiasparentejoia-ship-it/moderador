@@ -114,8 +114,11 @@ async def run_bot():
     @dp.chat_join_request()
     async def handle_join_request(request: ChatJoinRequest):
         uid = request.from_user.id
-        if user_accepted(uid):
+        accepted = user_accepted(uid)
+        print(f"[join_request] user_id={uid} accepted={accepted}")
+        if accepted:
             await bot.approve_chat_join_request(request.chat.id, uid)
+            print(f"[join_request] aprovado: {uid}")
         else:
             await bot.decline_chat_join_request(request.chat.id, uid)
             await bot.send_message(
