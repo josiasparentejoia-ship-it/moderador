@@ -75,10 +75,9 @@ async def create_invite_link() -> str:
         r = await client.post(
             f"https://api.telegram.org/bot{BOT_TOKEN}/createChatInviteLink",
             json={
-                "chat_id":      CHAT_ID,
-                "member_limit": 1,
-                "expire_date":  expire_date,
-                "creates_join_request": True,   # requer aprovação manual pelo bot
+                "chat_id":     CHAT_ID,
+                "expire_date": expire_date,
+                "creates_join_request": True,
             }
         )
     data = r.json()
