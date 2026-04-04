@@ -113,12 +113,28 @@ async def run_bot():
 
     @dp.chat_join_request()
     async def handle_join_request(request: ChatJoinRequest):
+        from aiogram.types import ChatPermissions
         uid = request.from_user.id
         accepted = user_accepted(uid)
         print(f"[join_request] user_id={uid} accepted={accepted}")
         if accepted:
             await bot.approve_chat_join_request(request.chat.id, uid)
-            print(f"[join_request] aprovado: {uid}")
+            # Remove restrições explicitamente após aprovação
+            await bot.restrict_chat_member(
+                request.chat.id,
+                uid,
+                permissions=ChatPermissions(
+                    can_send_messages=True,
+                    can_send_media_messages=True,
+                    can_send_polls=True,
+                    can_send_other_messages=True,
+                    can_add_web_page_previews=True,
+                    can_invite_users=True,
+                    can_change_info=False,
+                    can_pin_messages=False,
+                )
+            )
+            print(f"[join_request] aprovado e irrestrito: {uid}")
         else:
             await bot.decline_chat_join_request(request.chat.id, uid)
             await bot.send_message(
