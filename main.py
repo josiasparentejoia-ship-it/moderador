@@ -125,7 +125,7 @@ async def run_bot():
             )
 
     print("[bot] Polling iniciado...")
-    await dp.start_polling(bot)
+    await dp.start_polling(bot, allowed_updates=["message", "chat_join_request"])
 
 
 if __name__ == "__main__":
