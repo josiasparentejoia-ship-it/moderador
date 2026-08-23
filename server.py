@@ -57,9 +57,9 @@ def validate_init_data(init_data: str) -> dict | None:
         if not hmac.compare_digest(computed, received_hash):
             return None
 
-        # Verifica se não expirou (10 min de tolerância)
+        # Verifica se não expirou (24h de tolerância — padrão Telegram)
         auth_date = int(params.get("auth_date", 0))
-        if time.time() - auth_date > 600:
+        if time.time() - auth_date > 86400:
             return None
 
         user = json.loads(unquote(params.get("user", "{}")))

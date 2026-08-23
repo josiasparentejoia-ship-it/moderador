@@ -1,5 +1,4 @@
-moderador.db
-__pycache__/
-*.pyc
-*.pyo
-.venv/
+node_modules/
+.env
+*.log
+.DS_Store
