@@ -1,19 +1,36 @@
 FROM python:3.11-slim
 
+# Variáveis de build
+ARG DEBIAN_FRONTEND=noninteractive
+
 # Diretório de trabalho
 WORKDIR /app
 
-# Copia arquivos de dependências
-COPY requirements.txt ./
+# Instala dependências do sistema (se necessário)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
-# Instala dependências
-RUN pip install --no-cache-dir -r requirements.txt
+# Copia e instala dependências Python
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copia código da aplicação
-COPY bot_admin.py config.json index.html ./
+COPY bot_admin.py ./
+COPY index.html ./
 
-# Expõe porta (se necessário para healthcheck)
-EXPOSE 8000
+# Cria arquivo config.json vazio (será sobrescrito por volume ou variáveis)
+RUN echo '{"admin_ids":[],"welcome_message":{"text":"","media":null,"media_type":null,"button":{"text":"","url":""}},"periodic_messages":[]}' > config.json
+
+# Usuário não-root para segurança
+RUN useradd -m -u 1000 botuser && \
+    chown -R botuser:botuser /app
+USER botuser
+
+# Healthcheck (opcional)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import os; exit(0 if os.path.exists('/app/bot_admin.py') else 1)" || exit 1
 
 # Comando para iniciar o bot
-CMD ["python", "bot_admin.py"]
+CMD ["python", "-u", "bot_admin.py"]

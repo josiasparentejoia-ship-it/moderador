@@ -1,19 +1,64 @@
 version: '3.8'
 
 services:
-  moderador-bot-python:
+  bot:
     build:
       context: .
       dockerfile: Dockerfile.python
-    container_name: valak-moderador-python
+    container_name: valak-moderador-bot
     restart: unless-stopped
+
+    # Variáveis de ambiente
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
       - GROUP_ID=${GROUP_ID}
       - WEBAPP_URL=${WEBAPP_URL}
       - ADMIN_ID=${ADMIN_ID}
+      - PYTHONUNBUFFERED=1
+      - TZ=America/Sao_Paulo
+
+    # Arquivo .env (opcional se usar environment acima)
     env_file:
       - .env
+
+    # Volumes persistentes
     volumes:
-      - ./config.json:/app/config.json
-    command: python bot_admin.py
+      - ./config.json:/app/config.json:rw
+      - bot-logs:/app/logs
+
+    # Healthcheck
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Recursos (opcional - ajuste conforme necessário)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+    # Rede
+    networks:
+      - bot-network
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  bot-logs:
+    driver: local
+
+networks:
+  bot-network:
+    driver: bridge
