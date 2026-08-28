@@ -10,6 +10,7 @@ Bot do Telegram que gerencia novos membros do grupo, requer aceitação de termo
 - 🗑️ Apaga a mensagem anterior quando um novo membro entra
 - ✔️ Libera o chat após o usuário concordar com os termos
 - 🌐 API REST para integração com o WebApp
+- ⏰ **Mensagens periódicas automáticas** no grupo (agendadas via cron)
 
 ## 📋 Pré-requisitos
 
@@ -31,7 +32,22 @@ Bot do Telegram que gerencia novos membros do grupo, requer aceitação de termo
    GROUP_ID=-1002603662151
    WEBAPP_URL=https://seu-dominio.com
    PORT=3000
+
+   # Mensagens periódicas (formato cron)
+   CRON_SCHEDULE=0 */3 * * *
+   PERIODIC_MESSAGES=📢 Mensagem 1|||🎯 Mensagem 2|||⭐ Mensagem 3
    ```
+
+   **Formato CRON_SCHEDULE:**
+   - `*/30 * * * *` = a cada 30 minutos
+   - `0 */2 * * *` = a cada 2 horas
+   - `0 9,15,21 * * *` = às 9h, 15h e 21h
+   - `0 */3 * * *` = a cada 3 horas (padrão)
+
+   **PERIODIC_MESSAGES:**
+   - Separe múltiplas mensagens com `|||`
+   - As mensagens serão enviadas em rodízio
+   - Use emojis e HTML para formatação
 
 3. **Importante - Permissões do Bot:**
    - O bot precisa ser Admin do grupo
@@ -50,6 +66,21 @@ npm run dev
 **Produção:**
 ```bash
 npm start
+```
+
+**Com Docker Compose:**
+```bash
+# Inicia o container em background
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f
+
+# Parar o container
+docker-compose down
+
+# Reconstruir após mudanças
+docker-compose up -d --build
 ```
 
 ## 🌐 Endpoints da API
@@ -77,6 +108,8 @@ Health check do servidor.
 
 ## 📱 Fluxo de Funcionamento
 
+### Boas-vindas a Novos Membros
+
 1. **Novo membro entra** → Bot detecta via `chat_member` update
 2. **Bot restringe o usuário** → Apenas leitura no grupo
 3. **Bot apaga mensagem anterior** → Mantém apenas uma mensagem de boas-vindas
@@ -84,6 +117,13 @@ Health check do servidor.
 5. **Usuário clica no botão** → Abre o WebApp
 6. **Usuário lê e concorda** → WebApp chama `/api/agree`
 7. **Bot libera o chat** → Usuário pode enviar mensagens
+
+### Mensagens Periódicas
+
+1. **Bot inicia** → Agenda mensagens conforme `CRON_SCHEDULE`
+2. **No horário agendado** → Envia uma mensagem do rodízio
+3. **Rotação automática** → Próxima mensagem será diferente
+4. **Ciclo contínuo** → Mensagens se repetem em ordem
 
 ## 🔐 Segurança
 

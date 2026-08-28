@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+# Diretório de trabalho
+WORKDIR /app
+
+# Copia arquivos de dependências
+COPY requirements.txt ./
+
+# Instala dependências
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copia código da aplicação
+COPY bot_admin.py config.json index.html ./
+
+# Expõe porta (se necessário para healthcheck)
+EXPOSE 8000
+
+# Comando para iniciar o bot
+CMD ["python", "bot_admin.py"]

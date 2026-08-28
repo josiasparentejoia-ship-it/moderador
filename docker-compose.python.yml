@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  moderador-bot-python:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    container_name: valak-moderador-python
+    restart: unless-stopped
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - GROUP_ID=${GROUP_ID}
+      - WEBAPP_URL=${WEBAPP_URL}
+      - ADMIN_ID=${ADMIN_ID}
+    env_file:
+      - .env
+    volumes:
+      - ./config.json:/app/config.json
+    command: python bot_admin.py
